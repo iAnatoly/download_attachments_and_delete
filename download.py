@@ -8,7 +8,6 @@ import time
 
 from config import detach_dir, user, pwd, server
 
-
 class FileNameProvider:
     def __init__(self, basename='part'):
         self.counter = 1
@@ -56,27 +55,29 @@ class AttachmentFetcher:
                 print('WARN: data part of the attachment is empty')
                 continue
 
-            email_body = data[0][1]  # getting the mail content
-            mail = email.message_from_string(email_body)  # parsing the mail content to get a mail object
-
-            # Check if any attachments at all
-            if mail.get_content_maintype() != 'multipart':
-                continue
-
-            print('INFO: Processing email from: "{}"; Subject: "{}"'.format(mail['From'], mail['Subject']))
-
-            allow_delete = False
-
-            name_provider = FileNameProvider()
-
-            for part in mail.walk():
-                if self.process_part(part, name_provider):
-                    allow_delete = True  # delete email if at least one attachment was aved
-
-            if allow_delete:
+            if self.process_email(data):
                 print('INFO: Deleting message {}'.format(msg_id))
                 m.store(msg_id, '+X-GM-LABELS', '\\Trash')
                 m.expunge()
+
+    def process_email(self, data):
+        email_body = data[0][1]  # getting the mail content
+        mail = email.message_from_string(email_body)  # parsing the mail content to get a mail object
+
+        # Check if any attachments at all
+        if mail.get_content_maintype() != 'multipart':
+            return False
+
+        print('INFO: Processing email from: "{}"; Subject: "{}"'.format(mail['From'], mail['Subject']))
+
+        processed_at_least_one_attachment = False
+
+        name_provider = FileNameProvider()
+
+        for part in mail.walk():
+            if self.process_part(part, name_provider):
+                processed_at_least_one_attachment = True  # delete email if at least one attachment was aved
+        return processed_at_least_one_attachment
 
     def process_part(self, part, name_provider):
         # multipart are just containers, so we skip them

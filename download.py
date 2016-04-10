@@ -12,10 +12,11 @@ class FileNameProvider:
     def __init__(self, basename='part'):
         self.counter = 1
         self.default_ext = 'jpg'
+        self.template = '{}-{:03d}.jpg'
         self.basename = basename
 
     def get_surrogate_filename(self):
-        filename = '%s-%03d.%s'.format(self.basename, self.counter, self.default_ext)
+        filename = self.template.format(self.basename, self.counter)
         self.counter += 1
         return filename
 
@@ -25,7 +26,7 @@ class FileNameProvider:
         while True:
             if not os.path.isfile(result):
                 return result
-            result = os.path.join(path, '%s-%03d-%s'.format(self.basename, i, filename))
+            result = os.path.join(path, self.template.format(self.basename, i))
 
 
 class AttachmentFetcher:
@@ -52,8 +53,8 @@ class AttachmentFetcher:
             resp, data = m.fetch(msg_id, '(RFC822)')  # fetching the whole message
 
             if not data or not data[0]:
-                print('WARN: data part of the attachment is empty')
-                continue
+                print('WARN: data part of the attachment is empty (we are probably being throttled)')
+                break
 
             if self.process_email(data):
                 print('INFO: Deleting message {}'.format(msg_id))
@@ -91,8 +92,9 @@ class AttachmentFetcher:
         filename = part.get_filename()
 
         if not filename:
-            print('WARN: empty filename; using a surrogate')
             filename = name_provider.get_surrogate_filename()
+            print('WARN: empty filename; using a surrogate: {}'.format(filename))
+
 
         att_path = name_provider.get_unique_name(detach_dir, filename)
         return self.save_payload(att_path, part.get_payload(decode=True))

@@ -5,8 +5,13 @@ import email
 import imaplib
 import os
 import time
+import datetime
+import socket
+
+socket.setdefaulttimeout(10)
 
 from config import detach_dir, user, pwd, server
+
 
 class FileNameProvider:
     def __init__(self, basename='part'):
@@ -40,7 +45,8 @@ class AttachmentFetcher:
         m = imaplib.IMAP4_SSL(server)
         m.login(user, pwd)
 
-        print('INFO: logged in as {}'.format(user))
+
+        print('------- BEGINNING OF FETCH CYCLE: {} ({})-------'.format(datetime.datetime.now(), user))
 
         m.select(self.INBOX_LABEL)
 
@@ -60,6 +66,8 @@ class AttachmentFetcher:
                 print('INFO: Deleting message {}'.format(msg_id))
                 m.store(msg_id, '+X-GM-LABELS', '\\Trash')
                 m.expunge()
+        print('------- END OF FETCH CYCLE: {} -------'.format(datetime.datetime.now()))
+
 
     def process_email(self, data):
         email_body = data[0][1]  # getting the mail content

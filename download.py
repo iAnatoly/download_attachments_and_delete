@@ -37,7 +37,7 @@ class FileNameProvider:
 class AttachmentFetcher:
     def __init__(self):
         self.BACKOFF_NORMAL = 60
-        self.BACKOFF_ERROR = 300
+        self.BACKOFF_ERROR = 60
         self.INBOX_LABEL = "[Gmail]/All Mail"
         self.CRITERIA = "ALL"
 

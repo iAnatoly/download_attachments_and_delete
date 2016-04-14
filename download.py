@@ -38,8 +38,8 @@ class AttachmentFetcher:
     def __init__(self):
         self.BACKOFF_NORMAL = 60
         self.BACKOFF_ERROR = 60
-        self.INBOX_LABEL = "[Gmail]/All Mail"
-        self.CRITERIA = "ALL"
+        self.INBOX_LABEL = '"[Gmail]/All Mail"'
+        self.CRITERIA = 'ALL'
 
     def fetch_and_save(self):
         m = imaplib.IMAP4_SSL(server)
@@ -63,7 +63,7 @@ class AttachmentFetcher:
                 break
 
             if self.process_email(data):
-                print('INFO: Deleting message {}'.format(msg_id))
+                print('INFO: Deleting message {}'.format(msg_id.decode('utf-8')))
                 m.store(msg_id, '+X-GM-LABELS', '\\Trash')
                 m.expunge()
         print('------- END OF FETCH CYCLE: {} -------'.format(datetime.datetime.now()))
@@ -71,7 +71,7 @@ class AttachmentFetcher:
 
     def process_email(self, data):
         email_body = data[0][1]  # getting the mail content
-        mail = email.message_from_string(email_body)  # parsing the mail content to get a mail object
+        mail = email.message_from_string(email_body.decode('utf-8'))  # parsing the mail content to get a mail object
 
         # Check if any attachments at all
         if mail.get_content_maintype() != 'multipart':

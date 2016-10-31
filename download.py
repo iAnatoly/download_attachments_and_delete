@@ -33,6 +33,7 @@ class FileNameProvider:
             if not os.path.isfile(result):
                 return result
             result = os.path.join(path, self.template.format(self.basename, i))
+	    i += 1
 
 
 class AttachmentFetcher:

@@ -60,7 +60,7 @@ class AttachmentFetcher:
 	processed_items = 0
 
         for msg_id in items:
-	    if processed_items > config.batch_size:
+	    if processed_items >= config.batch_size:
 		print('Processed {} items; backing off'.format(processed_items))
 		break
 

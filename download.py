@@ -76,6 +76,11 @@ class AttachmentFetcher:
                 m.expunge()
 		processed_items += 1
         print('------- END OF FETCH CYCLE: {} -------'.format(datetime.datetime.now()))
+	if processed_items == 0:
+	     print("No emails with attachments left; exiting.")
+	     return 0
+	
+	return 1
 
 
     def process_email(self, data):
@@ -134,7 +139,7 @@ class AttachmentFetcher:
     def fetch_forever(self):
         while True:
             try:
-                self.fetch_and_save()
+                if not self.fetch_and_save(): break
                 print('INFO: sleeping for {} seconds'.format(self.BACKOFF_NORMAL))
                 time.sleep(self.BACKOFF_NORMAL)
             except Exception as ex:

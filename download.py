@@ -2,12 +2,12 @@
 # see @README.md
 
 import email
-import email.Header
 import imaplib
 import os
 import time
 import datetime
 import socket
+import email.header 
 
 socket.setdefaulttimeout(10)
 
@@ -92,8 +92,8 @@ class AttachmentFetcher:
         if mail.get_content_maintype() != 'multipart':
             return False
 
-        mail_from, encoding = email.Header.decode_header(mail['From'])[0]
-        mail_subject = email.Header.decode_header(mail['Subject'])[0]
+        mail_from, encoding = email.header.decode_header(mail['From'])[0]
+        mail_subject = email.header.decode_header(mail['Subject'])[0]
         print('INFO: Processing email from: "{}"; Subject: "{}"'.format(mail_from, mail_subject))
 
         processed_at_least_one_attachment = False
@@ -117,7 +117,7 @@ class AttachmentFetcher:
         filename = part.get_filename()
 
         if filename:
-            filename, encoding = email.Header.decode_header(filename)[0]
+            filename, encoding = email.header.decode_header(filename)[0]
         
         if not filename:
             filename = name_provider.get_surrogate_filename()

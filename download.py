@@ -2,12 +2,12 @@
 # see @README.md
 
 import email
+import email.Header
 import imaplib
 import os
 import time
 import datetime
 import socket
-import email.Header
 
 socket.setdefaulttimeout(10)
 
@@ -33,7 +33,7 @@ class FileNameProvider:
             if not os.path.isfile(result):
                 return result
             result = os.path.join(path, self.template.format(self.basename, i))
-	    i += 1
+            i += 1
 
 
 class AttachmentFetcher:
@@ -47,7 +47,6 @@ class AttachmentFetcher:
         m = imaplib.IMAP4_SSL(config.server)
         m.login(config.user, config.pwd)
 
-
         print('------- BEGINNING OF FETCH CYCLE: {} ({})-------'.format(datetime.datetime.now(), config.user))
 
         m.select(self.INBOX_LABEL)
@@ -57,12 +56,12 @@ class AttachmentFetcher:
 
         print('INFO: Found {} item(s)'.format(len(items)))
 
-	processed_items = 0
+        processed_items = 0
 
         for msg_id in items:
-	    if processed_items >= config.batch_size:
-		print('Processed {} items; backing off'.format(processed_items))
-		break
+            if processed_items >= config.batch_size:
+                print('Processed {} items; backing off'.format(processed_items))
+                break
 
             resp, data = m.fetch(msg_id, '(RFC822)')  # fetching the whole message
 
@@ -74,13 +73,15 @@ class AttachmentFetcher:
                 print('INFO: Deleting message {}'.format(msg_id.decode('utf-8')))
                 m.store(msg_id, '+X-GM-LABELS', '\\Trash')
                 m.expunge()
-		processed_items += 1
-        print('------- END OF FETCH CYCLE: {} -------'.format(datetime.datetime.now()))
-	if processed_items == 0:
-	     print("No emails with attachments left; exiting.")
-	     return 0
-	
-	return 1
+        
+            processed_items += 1
+            print('------- END OF FETCH CYCLE: {} -------'.format(datetime.datetime.now()))
+            
+        if processed_items == 0:
+            print("No emails with attachments left; exiting.")
+            return 0
+    
+        return 1
 
 
     def process_email(self, data):
@@ -91,8 +92,8 @@ class AttachmentFetcher:
         if mail.get_content_maintype() != 'multipart':
             return False
 
-	mail_from, encoding = email.Header.decode_header(mail['From'])[0]
-	mail_subject = email.Header.decode_header(mail['Subject'])[0]
+        mail_from, encoding = email.Header.decode_header(mail['From'])[0]
+        mail_subject = email.Header.decode_header(mail['Subject'])[0]
         print('INFO: Processing email from: "{}"; Subject: "{}"'.format(mail_from, mail_subject))
 
         processed_at_least_one_attachment = False
@@ -115,12 +116,12 @@ class AttachmentFetcher:
 
         filename = part.get_filename()
 
-	if filename:
-	    filename, encoding = email.Header.decode_header(filename)[0]
+        if filename:
+            filename, encoding = email.Header.decode_header(filename)[0]
+        
         if not filename:
             filename = name_provider.get_surrogate_filename()
             print('WARN: empty filename; using a surrogate: {}'.format(filename))
-
 
         att_path = name_provider.get_unique_name(config.detach_dir, filename)
         return self.save_payload(att_path, part.get_payload(decode=True))

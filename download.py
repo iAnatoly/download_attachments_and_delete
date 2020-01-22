@@ -75,8 +75,8 @@ class AttachmentFetcher:
                 m.expunge()
         
             processed_items += 1
-            print('------- END OF FETCH CYCLE: {} -------'.format(datetime.datetime.now()))
-            
+        
+        print('------- END OF FETCH CYCLE: {} -------'.format(datetime.datetime.now()))
         if processed_items == 0:
             print("No emails with attachments left; exiting.")
             return 0
@@ -93,7 +93,10 @@ class AttachmentFetcher:
             return False
 
         mail_from, encoding = email.header.decode_header(mail['From'])[0]
-        mail_subject = email.header.decode_header(mail['Subject'])[0]
+        if mail['Subject']:
+            mail_subject = email.header.decode_header(mail['Subject'])[0]
+        else:
+            mail_subject = '(no subject)'
         print('INFO: Processing email from: "{}"; Subject: "{}"'.format(mail_from, mail_subject))
 
         processed_at_least_one_attachment = False
@@ -117,11 +120,15 @@ class AttachmentFetcher:
         filename = part.get_filename()
 
         if filename:
-            filename, encoding = email.header.decode_header(filename)[0]
+            (filename, enc) = email.header.decode_header(filename)[0]
+            if enc:
+                filename = filename.decode(enc)
+            filename = filename.replace('/','_')
         
         if not filename:
             filename = name_provider.get_surrogate_filename()
             print('WARN: empty filename; using a surrogate: {}'.format(filename))
+
 
         att_path = name_provider.get_unique_name(config.detach_dir, filename)
         return self.save_payload(att_path, part.get_payload(decode=True))

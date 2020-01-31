@@ -40,8 +40,8 @@ class AttachmentFetcher:
     def __init__(self):
         self.BACKOFF_NORMAL = config.backoff_period
         self.BACKOFF_ERROR = config.backoff_period * 2
-        self.INBOX_LABEL = config.label #'"[Gmail]/All Mail"'
-        self.CRITERIA = 'ALL'
+        self.INBOX_LABEL = '"{}"'.format(config.label) #'"[Gmail]/All Mail"'
+        self.CRITERIA = '"{}"'.format(config.search_criteria)
 
     def fetch_and_save(self):
         m = imaplib.IMAP4_SSL(config.server)
@@ -51,7 +51,7 @@ class AttachmentFetcher:
 
         m.select(self.INBOX_LABEL)
 
-        resp, items = m.search(None, self.CRITERIA)
+        resp, items = m.search(None, 'X-GM-RAW', self.CRITERIA)
         items = items[0].split()  # getting the msg id
 
         print('INFO: Found {} item(s)'.format(len(items)))
@@ -86,6 +86,9 @@ class AttachmentFetcher:
 
     def process_email(self, data):
         email_body = data[0][1]  # getting the mail content
+        if type(email_body) is int:
+            return False
+
         mail = email.message_from_string(email_body.decode('utf-8'))  # parsing the mail content to get a mail object
 
         # Check if any attachments at all
@@ -94,7 +97,9 @@ class AttachmentFetcher:
 
         mail_from, encoding = email.header.decode_header(mail['From'])[0]
         if mail['Subject']:
-            mail_subject = email.header.decode_header(mail['Subject'])[0]
+            mail_subject,enc = email.header.decode_header(mail['Subject'])[0]
+            if enc:
+                mail_subject = mail_subject.decode(enc)
         else:
             mail_subject = '(no subject)'
         print('INFO: Processing email from: "{}"; Subject: "{}"'.format(mail_from, mail_subject))
